@@ -67,16 +67,6 @@ void onReceive(LoRaMesh_message_t message) {
     display->printf("Id Messaggio: %d\n", (message.message_id));
     display->printf("PayLoad: %d\n", (message.payload));
     printDisplay = true;
-    /*switch(stato_barca_ricevuto) {*/
-    /*    case st_ormeggio:*/
-    /*        Serial.println("Tutto apposto!");*/
-    /*        s = "Va bene";*/
-    /*        break;*/
-    /*    case st_movimento:*/
-    /*        Serial.println("ATTENZIONE: LA BARCA E' STATA RUBATA " + String(i++));*/
-    /*        s = "Non va bene";*/
-    /*        break;*/
-    /*}*/
 }
 
 void simulaBarca() {
