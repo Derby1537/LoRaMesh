@@ -68,19 +68,21 @@ void LoRaMesh::onReceive(int packetSize) {
     userOnReceiveCallBack(message);
 }
 
-int LoRaMesh::sendMessage(char id_gabbiotto[7], LoRaMesh_payload_t payload) {
+int LoRaMesh::sendMessage(const char id_gabbiotto[7], LoRaMesh_payload_t payload) {
     // Stiamo già inviando un messaggio. non conviene inviare altri messaggi
     if(messageToSend.message_id != 0) {
         return LORA_MESH_MESSAGE_QUEUE_FULL;
     }
 
     messageToSend = {
-        .destinatario = destination,
-        .mittente = LoRaMesh::id,
         .message_id = (uint16_t)random(1, 65535),
-        .payload = payload,
         .cum_RSSI = 0,
+        .payload = payload,
     };
+    for(int i = 0; i < 7; i++) {
+        messageToSend.id_gabbiotto[i] = id_gabbiotto[i];
+        messageToSend.targa[i] = LoRaMesh::targa[i];
+    }
 
     return LORA_MESH_MESSAGE_SENT_SUCCESS;
 }
