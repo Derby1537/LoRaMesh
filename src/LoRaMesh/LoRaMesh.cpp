@@ -1,13 +1,18 @@
 #include "LoRaMesh/LoRaMesh.h"
 
-uint8_t LoRaMesh::id = 0;
+char LoRaMesh::targa[7] = {0,0,0,0,0,0,0};
+uint8_t LoRaMesh::is_gabbiotto = 0;
 LoRaMesh_message_t LoRaMesh::messageToSend = {0};
 LoRaMesh_message_t LoRaMesh::messageToRedirect = {0};
-CircularQueue<uint8_t> LoRaMesh::queue;
+CircularQueue<uint16_t> LoRaMesh::queue;
 void (*LoRaMesh::userOnReceiveCallBack)(LoRaMesh_message_t) = nullptr;
 
-bool LoRaMesh::init(int id, void (*userOnReceiveCallBack)(LoRaMesh_message_t)) {
-    LoRaMesh::id = id;
+bool LoRaMesh::init(char targa[7], uint8_t is_gabbiotto, void (*userOnReceiveCallBack)(LoRaMesh_message_t)) {
+    for(int i = 0; i < 8; i++) {
+        LoRaMesh::targa[i] = targa[i];
+
+    }
+    LoRaMesh::is_gabbiotto = is_gabbiotto;
     LoRaMesh::messageToSend = {0};
     LoRaMesh::messageToRedirect = {0};
     LoRaMesh::userOnReceiveCallBack = userOnReceiveCallBack;
@@ -53,7 +58,9 @@ void LoRaMesh::onReceive(int packetSize) {
     }
     queue.push(message.message_id);
 
-    if((message.destinatario & id) != id) {
+    if(!is_gabbiotto) {
+        int rssi = lora->rssi();
+        message.cum_RSSI += rssi;
         messageToRedirect = message;
         return;
     }
@@ -61,7 +68,7 @@ void LoRaMesh::onReceive(int packetSize) {
     userOnReceiveCallBack(message);
 }
 
-int LoRaMesh::sendMessage(uint8_t destination, uint8_t payload) {
+int LoRaMesh::sendMessage(char id_gabbiotto[7], LoRaMesh_payload_t payload) {
     // Stiamo già inviando un messaggio. non conviene inviare altri messaggi
     if(messageToSend.message_id != 0) {
         return LORA_MESH_MESSAGE_QUEUE_FULL;
@@ -70,8 +77,9 @@ int LoRaMesh::sendMessage(uint8_t destination, uint8_t payload) {
     messageToSend = {
         .destinatario = destination,
         .mittente = LoRaMesh::id,
-        .message_id = (uint8_t)random(1, 255),
+        .message_id = (uint16_t)random(1, 65535),
         .payload = payload,
+        .cum_RSSI = 0,
     };
 
     return LORA_MESH_MESSAGE_SENT_SUCCESS;
@@ -83,3 +91,6 @@ void LoRaMesh::sendMessagePrivate(LoRaMesh_message_t message) {
     lora->endPacket();
 }
 
+float LoRaMesh::calculateDistance(int rssi) {
+    return rssi * rssi_multiplier;
+}

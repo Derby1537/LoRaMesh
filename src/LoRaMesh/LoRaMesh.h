@@ -9,24 +9,35 @@
 
 #include <iot_board.h>
 #include "CircularQueue/CircularQueue.h"
+#include "state_t.h"
+
+#define rssi_multiplier -0.5
 
 typedef struct {
-    uint8_t destinatario;
-    uint8_t mittente;
-    uint8_t message_id;
-    uint8_t payload;
+    state_t stato;
+    uint8_t livello_batteria;
+} LoRaMesh_payload_t;
+
+typedef struct {
+    char id_gabbiotto[7];
+    char targa[7];
+    uint16_t message_id;
+    int32_t cum_RSSI;
+    LoRaMesh_payload_t payload;
 } LoRaMesh_message_t;
 
 class LoRaMesh {
 public:
     LoRaMesh() = delete;
 
-    static bool init(int id, void (*userOnReceiveCallBack)(LoRaMesh_message_t));
-    static int sendMessage(uint8_t destination, uint8_t payload);
+    static bool init(char targa[7], uint8_t is_gabbiotto, void (*userOnReceiveCallBack)(LoRaMesh_message_t));
+    static int sendMessage(char id_gabbiotto[7], LoRaMesh_payload_t payload);
+    static float calculateDistance(int rssi);
     static void update();
 private:
-    static CircularQueue<uint8_t> queue;
-    static uint8_t id; 
+    static CircularQueue<uint16_t> queue;
+    static char targa[7]; 
+    static uint8_t is_gabbiotto;
     static void onReceive(int packetSize);
     static void (*userOnReceiveCallBack)(LoRaMesh_message_t message);
     static void sendMessagePrivate(LoRaMesh_message_t message);
