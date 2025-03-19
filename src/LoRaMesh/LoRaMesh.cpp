@@ -7,8 +7,8 @@ LoRaMesh_message_t LoRaMesh::messageToRedirect = {0};
 CircularQueue<uint16_t> LoRaMesh::queue;
 void (*LoRaMesh::userOnReceiveCallBack)(LoRaMesh_message_t) = nullptr;
 
-bool LoRaMesh::init(char targa[7], uint8_t is_gabbiotto, void (*userOnReceiveCallBack)(LoRaMesh_message_t)) {
-    for(int i = 0; i < 8; i++) {
+bool LoRaMesh::init(const char targa[7], uint8_t is_gabbiotto, void (*userOnReceiveCallBack)(LoRaMesh_message_t)) {
+    for(int i = 0; i < 7; i++) {
         LoRaMesh::targa[i] = targa[i];
 
     }

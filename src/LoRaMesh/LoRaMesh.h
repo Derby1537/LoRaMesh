@@ -30,7 +30,7 @@ class LoRaMesh {
 public:
     LoRaMesh() = delete;
 
-    static bool init(char targa[7], uint8_t is_gabbiotto, void (*userOnReceiveCallBack)(LoRaMesh_message_t));
+    static bool init(const char targa[7], uint8_t is_gabbiotto, void (*userOnReceiveCallBack)(LoRaMesh_message_t));
     static int sendMessage(char id_gabbiotto[7], LoRaMesh_payload_t payload);
     static float calculateDistance(int rssi);
     static void update();
