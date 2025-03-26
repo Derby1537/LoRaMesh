@@ -3,6 +3,7 @@
 
 typedef enum {
     st_ormeggio,
+    st_rubata,
     st_movimento,
 } state_t;
 
