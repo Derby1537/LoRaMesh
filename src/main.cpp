@@ -1,6 +1,6 @@
 #include <cstdint>
 #include <iot_board.h>
-#include "state_t.h"
+#include "LoRaMesh/state_t.h"
 #include "LoRaMesh/LoRaMesh.h"
 
 state_t stato = st_ormeggio;
