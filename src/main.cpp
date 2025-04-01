@@ -23,7 +23,7 @@ void setup() {
     IoTBoard::init_buttons();
     IoTBoard::init_display();
 
-    if(!LoRaMesh::init(targa, isGabbiotto, onReceive)) {
+    if(!LoRaMesh::init(targa, onReceive)) {
         Serial.println("Errore nell'avvio di LoRa");
         ESP.restart();
     }
@@ -70,6 +70,8 @@ void loop() {
                 LoRaMesh::sendMessage(targaGabbiotto, payload);
                 Serial.println("Mi hanno rubato");
                 break;
+            default:
+                break;
         }
     }
     LoRaMesh::update();
@@ -81,11 +83,10 @@ void onReceive(LoRaMesh_message_t message) {
     display->setCursor(0, 0);
     display->printf("Targa mittente: ");
     for(int i = 0; i < 7; i++) {
-        display->printf("%c", message.targa[i]);
+        display->printf("%c", message.targa_mittente[i]);
     }
     display->printf("\n");
     display->printf("Id Messaggio: %d\n", (message.message_id));
-    display->printf("RSSI cumulativo: %d\n", message.cum_RSSI);
     display->printf("Livello batteria: %d\n", payload.livello_batteria);
     display->printf("Stato barca: %s\n", payload.stato == st_ormeggio ? "parcheggiata" : "rubata");
     printDisplay = true;

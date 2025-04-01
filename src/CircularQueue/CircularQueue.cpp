@@ -29,4 +29,5 @@ int CircularQueue<T>::getIndex(T elem) {
 }
 
 template class CircularQueue<uint8_t>;
+template class CircularQueue<uint16_t>;
 
