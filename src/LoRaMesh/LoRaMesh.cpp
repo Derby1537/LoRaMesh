@@ -1,6 +1,25 @@
 #include "LoRaMesh/LoRaMesh.h"
 
-char LoRaMesh::targa[7] = {0,0,0,0,0,0,0};
+
+char LoRaMesh::targa[TARGA_LEN] = {0,0,0,0,0,0,0};
+
+// Chiave che hanno tutti in comune
+const uint8_t commonKey[KEY_LEN] = {
+    0xDE, 0xAD, 0xBE, 0xEF,
+    0x01, 0x23, 0x45, 0x67,
+    0x89, 0xAB, 0xCD, 0xEF,
+    0x11, 0x22, 0x33, 0x44
+};
+
+// Chiave specifica della nave
+const uint8_t privateKey[KEY_LEN] = {
+    0xBA, 0xAD, 0xF0, 0x0D,
+    0xFE, 0xED, 0xDE, 0xAD,
+    0x12, 0x34, 0x56, 0x78,
+    0x9A, 0xBC, 0xDE, 0xF0
+};
+
+
 LoRaMesh_message_t LoRaMesh::messageToSend = {0};
 LoRaMesh_message_t LoRaMesh::messageToRedirect = {0};
 CircularQueue<uint16_t> LoRaMesh::queue;
@@ -39,31 +58,34 @@ void LoRaMesh::update() {
 
 void LoRaMesh::onReceive(int packetSize) {
     // Il pacchetto è vuoto
-    if(packetSize == 0) {
+    if (packetSize == 0 || packetSize != sizeof(LoRaMesh_message_t)) {
         return;
     }
 
-    if(packetSize != sizeof(LoRaMesh_message_t)) {
-        return;
-    }
+    // Leggiamo il pacchetto cifrato
+    LoRaMesh_message_t encryptedMessage;
+    lora->readBytes((uint8_t*)&encryptedMessage, sizeof(LoRaMesh_message_t));
 
-    // Leggiamo tutto il messaggio e lo inseriamo all'interno di una variabile temporanea message
-    LoRaMesh_message_t message;
-    lora->readBytes((uint8_t*)&message, sizeof(LoRaMesh_message_t)); 
+    // Evitiamo duplicati
+    if (queue.getIndex(encryptedMessage.message_id) >= 0) return;
+    queue.push(encryptedMessage.message_id);
 
-    if(queue.getIndex(message.message_id) >= 0) {
-        return;
-    }
-    queue.push(message.message_id);
+    // Creiamo una copia per decriptarlo
+    LoRaMesh_message_t decryptedMessage = encryptedMessage;
+
+    // Decriptiamo con la chiave comune
+    decryptMessage(&decryptedMessage, commonKey, sizeof(commonKey));
 
     // Il messaggio non è per noi, lo reinviamo
-    if(strcmp(message.targa_destinatario, LoRaMesh::targa) != 0) {
-        messageToRedirect = message;
+    if (memcmp(decryptedMessage.targa_destinatario, LoRaMesh::targa, 7) != 0) {
+        messageToRedirect = encryptedMessage;  // messaggio originale criptato
         return;
     }
+    
+    // Sennò decriptiamo il payload
+    decryptPayload(&decryptedMessage.payload, commonKey, sizeof(commonKey)); 
 
-    // Altrimenti lo diamo al main
-    userOnReceiveCallBack(message);
+    userOnReceiveCallBack(decryptedMessage);
 }
 
 int LoRaMesh::sendMessage(const char targa_destinatario[7], LoRaMesh_payload_t payload) {
@@ -72,14 +94,19 @@ int LoRaMesh::sendMessage(const char targa_destinatario[7], LoRaMesh_payload_t p
         return LORA_MESH_MESSAGE_QUEUE_FULL;
     }
 
+    encryptPayload(&payload, privateKey, sizeof(privateKey));
+
     messageToSend = {
         .message_id = (uint16_t)random(1, 65535),
         .payload = payload,
     };
+
     for(int i = 0; i < 7; i++) {
         messageToSend.targa_destinatario[i] =  targa_destinatario[i];
         messageToSend.targa_mittente[i] = LoRaMesh::targa[i];
     }
+
+    encryptMessage(&messageToSend, commonKey, sizeof(commonKey));
 
     return LORA_MESH_MESSAGE_SENT_SUCCESS;
 }
@@ -90,3 +117,32 @@ void LoRaMesh::sendMessagePrivate(LoRaMesh_message_t message) {
     lora->endPacket();
 }
 
+// Funzioni per cifrare e decifrare i pacchetti
+void encryptPayload(LoRaMesh_payload_t* payload, const uint8_t* key, size_t key_len) {
+    uint8_t* ptr = (uint8_t*)payload;
+    for (size_t i = 0; i < sizeof(LoRaMesh_payload_t); ++i) {
+        ptr[i] ^= key[i % key_len];
+    }
+}
+
+void decryptPayload(LoRaMesh_payload_t* payload, const uint8_t* key, size_t key_len) {
+    uint8_t* ptr = (uint8_t*)payload;
+    for (size_t i = 0; i < sizeof(LoRaMesh_payload_t); ++i) {
+        ptr[i] ^= key[i % key_len];
+    }
+}
+
+void encryptMessage(LoRaMesh_message_t* message, const uint8_t* key, size_t key_len) {
+    uint8_t* ptr = (uint8_t*)message;
+    for (size_t i = 0; i < sizeof(LoRaMesh_message_t); ++i) {
+        ptr[i] ^= key[i % key_len];
+    }
+}
+
+void decryptMessage(LoRaMesh_message_t* message, const uint8_t* key, size_t key_len) {
+    uint8_t* ptr = (uint8_t*)message;
+    for (size_t i = 0; i < sizeof(LoRaMesh_message_t); ++i) {
+        ptr[i] ^= key[i % key_len];
+    }
+
+}

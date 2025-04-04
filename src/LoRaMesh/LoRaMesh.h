@@ -6,6 +6,9 @@
 #define LORA_MESH_MESSAGE_SENT_UNSUCCESS 1
 #define LORA_MESH_MESSAGE_SENT_SUCCESS 0
 #define LORA_MESH_MESSAGE_QUEUE_FULL -1
+#define TARGA_LEN 7
+#define KEY_LEN 16
+
 
 #include <iot_board.h>
 #include "CircularQueue/CircularQueue.h"

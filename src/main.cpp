@@ -4,8 +4,8 @@
 #include "LoRaMesh/LoRaMesh.h"
 
 state_t stato = st_ormeggio;
-const char targa[7] = {'A', 'B', '1', '2', '3', 'X', 'Y'};
-const char targaGabbiotto[7] = {'A', 'B', '1', '2', '3', 'X', 'Y'};
+const char targa[TARGA_LEN] = {'A', 'B', '1', '2', '3', 'X', 'Y'};
+const char targaGabbiotto[TARGA_LEN] = {'A', 'B', '1', '2', '3', 'X', 'Y'};
 const bool isGabbiotto = true;
 LoRaMesh_payload_t payload;
 /*const uint8_t idBarca = 0x01;*/
@@ -36,7 +36,7 @@ void setup() {
         display->println("Dispositivo avviato come barca");
     }
     Serial.print("Targa di questo dispositivo: ");
-    for(int i = 0; i < 7; i++) {
+    for(int i = 0; i < TARGA_LEN; i++) {
         Serial.print(targa[i]);
     }
     livelloBatteria = random(50, 100);
@@ -82,7 +82,7 @@ void onReceive(LoRaMesh_message_t message) {
     display->clearDisplay();
     display->setCursor(0, 0);
     display->printf("Targa mittente: ");
-    for(int i = 0; i < 7; i++) {
+    for(int i = 0; i < TARGA_LEN; i++) {
         display->printf("%c", message.targa_mittente[i]);
     }
     display->printf("\n");
