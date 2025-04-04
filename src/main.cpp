@@ -4,10 +4,10 @@
 #include "LoRaMesh/LoRaMesh.h"
 
 state_t stato = st_ormeggio;
-const char targa[7] = {'A', 'B', '1', '2', '3', 'X', 'Y'};
-const char targaGabbiotto[7] = {'A', 'B', '1', '2', '3', 'X', 'Y'};
-const bool isGabbiotto = true;
+char targa[7] = {'A', 'B', '1', '2', '3', 'X', 'Y'};
+char targaGabbiotto[7] = {'A', 'B', '1', '2', '3', 'X', 'Y'};
 LoRaMesh_payload_t payload;
+bool isGabbiotto = false;
 /*const uint8_t idBarca = 0x01;*/
 String s = "";
 int i = 0;
@@ -26,14 +26,6 @@ void setup() {
     if(!LoRaMesh::init(targa, onReceive)) {
         Serial.println("Errore nell'avvio di LoRa");
         ESP.restart();
-    }
-    if(isGabbiotto) {
-        Serial.println("Dispositivo avviato come gabbiotto");
-        display->println("Dispositivo avviato come gabbiotto");
-    }
-    else {
-        Serial.println("Dispositivo avviato come barca");
-        display->println("Dispositivo avviato come barca");
     }
     Serial.print("Targa di questo dispositivo: ");
     for(int i = 0; i < 7; i++) {

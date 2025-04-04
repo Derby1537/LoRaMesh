@@ -1,4 +1,5 @@
 #include "LoRaMesh/LoRaMesh.h"
+#include <cstring>
 
 char LoRaMesh::targa[7] = {0,0,0,0,0,0,0};
 LoRaMesh_message_t LoRaMesh::messageToSend = {0};
@@ -6,7 +7,7 @@ LoRaMesh_message_t LoRaMesh::messageToRedirect = {0};
 CircularQueue<uint16_t> LoRaMesh::queue;
 void (*LoRaMesh::userOnReceiveCallBack)(LoRaMesh_message_t) = nullptr;
 
-bool LoRaMesh::init(const char targa[7], void (*userOnReceiveCallBack)(LoRaMesh_message_t)) {
+bool LoRaMesh::init(char targa[7], void (*userOnReceiveCallBack)(LoRaMesh_message_t)) {
     for(int i = 0; i < 7; i++) {
         LoRaMesh::targa[i] = targa[i];
 
@@ -57,7 +58,7 @@ void LoRaMesh::onReceive(int packetSize) {
     queue.push(message.message_id);
 
     // Il messaggio non è per noi, lo reinviamo
-    if(strcmp(message.targa_destinatario, LoRaMesh::targa) != 0) {
+    if(memcmp(message.targa_destinatario, LoRaMesh::targa, 7) != 0) {
         messageToRedirect = message;
         return;
     }
@@ -66,7 +67,7 @@ void LoRaMesh::onReceive(int packetSize) {
     userOnReceiveCallBack(message);
 }
 
-int LoRaMesh::sendMessage(const char targa_destinatario[7], LoRaMesh_payload_t payload) {
+int LoRaMesh::sendMessage(char targa_destinatario[7], LoRaMesh_payload_t payload) {
     // Stiamo già inviando un messaggio. non conviene inviare altri messaggi
     if(messageToSend.message_id != 0) {
         return LORA_MESH_MESSAGE_QUEUE_FULL;
